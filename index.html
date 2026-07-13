@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Observer | Transparent MCP Proxy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #fafafa;
+            --text: #0a0a0a;
+            --accent: #555;
+            --border: #e0e0e0;
+            --code-bg: #eeeeee;
+            --transition: 0.3s ease;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0a0a0a;
+            --text: #fafafa;
+            --accent: #888;
+            --border: #222;
+            --code-bg: #1a1a1a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Archivo', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            transition: background-color var(--transition), color var(--transition);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            font-weight: 300;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+        }
+
+        p {
+            font-weight: 300;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+            transition: opacity var(--transition);
+        }
+
+        a:hover {
+            opacity: 0.7;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        header {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 100;
+        }
+
+        .logo {
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 120px 0 80px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero .tagline {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-bottom: 2rem;
+        }
+
+        /* Stats Section */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .stat-item .value {
+            font-size: 2.5rem;
+            font-weight: 300;
+            display: block;
+        }
+
+        .stat-item .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+        }
+
+        /* Oil Painting Banner Sections */
+        .banner {
+            position: relative;
+            height: 500px;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .banner img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.6);
+        }
+
+        .banner-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 0 2rem;
+        }
+
+        .banner-content h2 {
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .banner-content p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Features Grid */
+        .features {
+            padding: 100px 0;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+            font-size: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+        }
+
+        .feature-card {
+            padding: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .feature-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card p {
+            font-size: 0.95rem;
+            color: var(--accent);
+        }
+
+        /* Install Block */
+        .install-section {
+            padding: 80px 0;
+            background: var(--code-bg);
+            color: var(--text);
+        }
+
+        .install-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .install-header {
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        pre {
+            background: #000;
+            color: #fff;
+            padding: 1.5rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: monospace;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            background: none;
+            border: 1px solid #444;
+            color: #aaa;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+
+        /* Mission Quote */
+        .mission {
+            padding: 100px 0;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .mission blockquote {
+            font-size: 2.5rem;
+            font-weight: 300;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.3;
+        }
+
+        .mission cite {
+            display: block;
+            margin-top: 2rem;
+            font-style: normal;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--accent);
+        }
+
+        /* Contributors */
+        .contributors {
+            padding: 80px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .contributor-grid {
+            display: flex;
+            justify-content: center;
+            gap: 4rem;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .contributor {
+            text-align: center;
+        }
+
+        .contributor img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            filter: grayscale(1);
+            transition: filter var(--transition);
+        }
+
+        .contributor:hover img {
+            filter: grayscale(0);
+        }
+
+        .contributor .name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .contributor .github {
+            font-size: 0.75rem;
+            color: var(--accent);
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 100px 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background: var(--text);
+            color: var(--bg);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-size: 0.8rem;
+            margin-top: 2rem;
+            transition: opacity var(--transition);
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .banner h2 { font-size: 2rem; }
+            .mission blockquote { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container" style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <div class="logo">Observer</div>
+            <button class="theme-toggle" id="theme-toggle">Dark Mode</button>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Observer</h1>
+            <p class="tagline">Transparent MCP proxy for agent observability.</p>
+            <p style="max-width: 700px; margin: 0 auto;">Logs every tool call, exposes trace history, and reduces token overhead. See what your agents actually do.</p>
+            <a href="https://github.com/valtors/observer" class="btn">View on GitHub</a>
+        </div>
+    </section>
+
+    <section class="container">
+        <div class="stats">
+            <div class="stat-item">
+                <span class="value">1</span>
+                <span class="label">Stars</span>
+            </div>
+            <div class="stat-item">
+                <span class="value">2</span>
+                <span class="label">Forks</span>
+            </div>
+            <div class="stat-item">
+                <span class="value">Go</span>
+                <span class="label">Language</span>
+            </div>
+            <div class="stat-item">
+                <span class="value">MIT</span>
+                <span class="label">License</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="banner">
+        <img src="https://raw.githubusercontent.com/valtors/relay-landing/master/assets/workbench.jpg" alt="Workbench">
+        <div class="banner-content">
+            <h2>Precision Tracing</h2>
+            <p>SQLite trace storage with metadata-only by default. Total control over what gets logged.</p>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">Core Features</h2>
+            <div class="grid">
+                <div class="feature-card">
+                    <h3>Zero Overhead</h3>
+                    <p>A transparent proxy designed to run in the background with minimal impact on agent latency.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Smart Redaction</h3>
+                    <p>Configurable redaction patterns (OBSERVER_REDACT_PATTERNS) to keep sensitive data out of logs.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Session Isolation</h3>
+                    <p>Automatic session isolation and DB permissions (0600) ensure data privacy and integrity.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Raw Payload Opt-in</h3>
+                    <p>Use OBSERVER_RAW_PAYLOAD=1 when you need deep inspection of tool inputs and outputs.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Input/Output Hashing</h3>
+                    <p>Verify integrity and identify repetitive calls through intelligent payload hashing.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Transparent Proxy</h3>
+                    <p>Drop it into your stack and start observing immediately without changing agent logic.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="banner">
+        <img src="https://raw.githubusercontent.com/valtors/relay-landing/master/assets/open-book.jpg" alt="Open Book">
+        <div class="banner-content">
+            <h2>Understand the Flow</h2>
+            <p>From tool calls to trace history, gain full visibility into the Model Context Protocol.</p>
+        </div>
+    </section>
+
+    <section class="install-section">
+        <div class="container">
+            <div class="install-container">
+                <div class="install-header">
+                    <h3>Installation</h3>
+                </div>
+                <pre><button class="copy-btn" onclick="copyCode()">Copy</button><code id="install-code">go install github.com/valtors/observer@latest</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <section class="mission">
+        <div class="container">
+            <blockquote>"Transparency is the foundation of trust in autonomous systems."</blockquote>
+            <cite>— The Observer Mission</cite>
+        </div>
+    </section>
+
+    <section class="banner">
+        <img src="https://raw.githubusercontent.com/valtors/relay-landing/master/assets/bridge.jpg" alt="Bridge">
+        <div class="banner-content">
+            <h2>Bridge the Gap</h2>
+            <p>Connect your agents to the observability they deserve.</p>
+        </div>
+    </section>
+
+    <section class="contributors">
+        <div class="container">
+            <h2 class="section-title">Contributors</h2>
+            <div class="contributor-grid">
+                <div class="contributor">
+                    <a href="https://github.com/tamish560">
+                        <img src="https://avatars.githubusercontent.com/u/189916421?v=4" alt="tamish560">
+                        <div class="name">tamish560</div>
+                        <div class="github">155 Contributions</div>
+                    </a>
+                </div>
+                <div class="contributor">
+                    <a href="https://github.com/caioribeiroclw-pixel">
+                        <img src="https://avatars.githubusercontent.com/u/266331747?v=4" alt="caioribeiroclw-pixel">
+                        <div class="name">caioribeiroclw-pixel</div>
+                        <div class="github">Contributor</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <div class="container">
+            <h2>Ready to observe?</h2>
+            <p>Join the movement towards observable AI agents.</p>
+            <a href="https://github.com/valtors/observer" class="btn">Get Started on GitHub</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            &copy; 2026 Observer Project. Licensed under MIT.
+        </div>
+    </footer>
+
+    <script>
+        const toggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        // Check local storage
+        if (localStorage.getItem('theme') === 'dark') {
+            html.setAttribute('data-theme', 'dark');
+            toggle.textContent = 'Light Mode';
+        }
+
+        toggle.addEventListener('click', () => {
+            if (html.hasAttribute('data-theme')) {
+                html.removeAttribute('data-theme');
+                toggle.textContent = 'Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                toggle.textContent = 'Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        function copyCode() {
+            const code = document.getElementById('install-code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
